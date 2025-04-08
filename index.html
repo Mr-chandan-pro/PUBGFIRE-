@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pubhfire</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #111;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let player = {
+      x: 180,
+      y: 500,
+      width: 40,
+      height: 40,
+      color: "lime"
+    };
+
+    let bullets = [];
+    let enemies = [];
+    let score = 0;
+    let gameOver = false;
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawBullets() {
+      ctx.fillStyle = "red";
+      bullets.forEach((bullet, index) => {
+        bullet.y -= 5;
+        ctx.fillRect(bullet.x, bullet.y, 5, 10);
+        if (bullet.y < 0) bullets.splice(index, 1);
+      });
+    }
+
+    function drawEnemies() {
+      ctx.fillStyle = "orange";
+      enemies.forEach((enemy, eIndex) => {
+        enemy.y += 2;
+        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+
+        bullets.forEach((bullet, bIndex) => {
+          if (
+            bullet.x < enemy.x + enemy.width &&
+            bullet.x + 5 > enemy.x &&
+            bullet.y < enemy.y + enemy.height &&
+            bullet.y + 10 > enemy.y
+          ) {
+            enemies.splice(eIndex, 1);
+            bullets.splice(bIndex, 1);
+            score++;
+          }
+        });
+
+        if (
+          enemy.x < player.x + player.width &&
+          enemy.x + enemy.width > player.x &&
+          enemy.y + enemy.height > player.y
+        ) {
+          gameOver = true;
+        }
+
+        if (enemy.y > canvas.height) enemies.splice(eIndex, 1);
+      });
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 25);
+    }
+
+    function drawGameOver() {
+      ctx.fillStyle = "white";
+      ctx.font = "30px Arial";
+      ctx.fillText("Game Over", 120, 300);
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!gameOver) {
+        drawPlayer();
+        drawBullets();
+        drawEnemies();
+        drawScore();
+      } else {
+        drawGameOver();
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    function shootBullet() {
+      if (!gameOver) {
+        bullets.push({
+          x: player.x + player.width / 2 - 2,
+          y: player.y
+        });
+      }
+    }
+
+    function spawnEnemy() {
+      if (!gameOver) {
+        let x = Math.random() * (canvas.width - 40);
+        enemies.push({
+          x: x,
+          y: -40,
+          width: 40,
+          height: 40
+        });
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && player.x > 0) player.x -= 20;
+      if (e.key === "ArrowRight" && player.x < canvas.width - player.width) player.x += 20;
+      if (e.key === " " || e.key === "Enter") shootBullet();
+    });
+
+    setInterval(spawnEnemy, 1000);
+    gameLoop();
+  </script>
+</body>
+</html>
